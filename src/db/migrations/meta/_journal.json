@@ -1,0 +1,41 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1698610705556,
+      "tag": "0000_polite_taskmaster",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1698612379328,
+      "tag": "0001_loose_dragon_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1698612623725,
+      "tag": "0002_red_secret_warriors",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1698612677474,
+      "tag": "0003_plain_scream",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1698613503395,
+      "tag": "0004_busy_lake",
+      "breakpoints": true
+    }
+  ]
+}
