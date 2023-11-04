@@ -1,66 +1,60 @@
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { eq } from 'drizzle-orm';
-import { db } from '../db';
-import { user } from '../db/schema';
-import { HttpStatus } from '../types/httpStatus.enum';
+import { db } from '@/db';
+import { User, user } from '@/db/schema';
+import { HttpStatus } from '@/types/httpStatus.enum';
 import bcrypt from 'bcrypt';
 
-const getUserByEmail = async (email: string) => {
-  const result = await db
-    .select({
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    })
-    .from(user)
-    .where(eq(user.email, email));
-
-  return result;
+const userWithoutPasswordSchema = {
+  id: user.id,
+  email: user.email,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  role: user.role,
+  createdAt: user.createdAt,
+  updatedAt: user.updatedAt,
 };
 
-export const getUsers = async (
-  _req: Request,
-  res: Response,
-  _next: NextFunction,
-) => {
-  const users = await db
-    .select({
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    })
-    .from(user);
+const userWithPasswordSchema = {
+  ...userWithoutPasswordSchema,
+  password: user.password,
+};
 
-  if (!users) {
-    res.status(HttpStatus.NOT_FOUND).send();
-    return;
+const getUserByEmail = async (
+  email: string,
+): Promise<Partial<User>[] | void> => {
+  try {
+    const result = await db
+      .select(userWithoutPasswordSchema)
+      .from(user)
+      .where(eq(user.email, email));
+
+    return result;
+  } catch (error) {
+    console.error(error);
   }
-
-  res.status(HttpStatus.OK).json(users);
 };
 
-export const userLogin = async (
-  req: Request,
-  res: Response,
-  _next: NextFunction,
-) => {
+export const getUsers = async (_req: Request, res: Response) => {
+  try {
+    const users = await db.select(userWithoutPasswordSchema).from(user);
+
+    if (!users) {
+      res.status(HttpStatus.NOT_FOUND).send();
+      return;
+    }
+
+    res.status(HttpStatus.OK).json(users);
+  } catch (error) {
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(error);
+  }
+};
+
+export const userLogin = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   const result = await db
-    .select({
-      id: user.id,
-      email: user.email,
-      password: user.password,
-      role: user.role,
-    })
+    .select(userWithPasswordSchema)
     .from(user)
     .where(eq(user.email, email));
 
@@ -85,34 +79,28 @@ export const userLogin = async (
   req.session.user = userWithoutPassword;
 
   const fetchedUsers = await getUserByEmail(email);
-  if (fetchedUsers.length !== 1) {
+  if (!fetchedUsers || fetchedUsers.length !== 1) {
     res.status(HttpStatus.NOT_FOUND).send();
     return;
   }
 
-  res.status(HttpStatus.OK).json({ message: 'Success', user: fetchedUsers[0] });
+  const fetchedUser = fetchedUsers[0];
+
+  res.status(HttpStatus.OK).json({ user: fetchedUser });
 };
 
-export const userLogout = async (
-  req: Request,
-  res: Response,
-  _next: NextFunction,
-) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error(err);
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).send();
+export const userLogout = async (req: Request, res: Response) => {
+  req.session.destroy((error) => {
+    if (error) {
+      console.error(error);
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(error);
       return;
     }
     res.status(HttpStatus.OK).send('Logged out');
   });
 };
 
-export const createUser = async (
-  req: Request,
-  res: Response,
-  _next: NextFunction,
-) => {
+export const createUser = async (req: Request, res: Response) => {
   if (!req.body.password) {
     throw new Error('Password is required');
   }
@@ -123,12 +111,18 @@ export const createUser = async (
   try {
     await db.insert(user).values({ ...req.body, password: hashedPassword });
 
-    const createdUser = await getUserByEmail(req.body.email);
-    res
-      .status(HttpStatus.CREATED)
-      .json({ message: 'Success', user: createdUser });
+    const createdUsers = await getUserByEmail(req.body.email);
+
+    if (!createdUsers || createdUsers.length !== 1) {
+      res.status(HttpStatus.NOT_FOUND).send();
+      return;
+    }
+
+    const createdUser = createdUsers[0];
+
+    res.status(HttpStatus.CREATED).json({ user: createdUser });
   } catch (error) {
     console.error(error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send();
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(error);
   }
 };

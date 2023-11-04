@@ -1,20 +1,15 @@
-import { Router } from "express";
-import {
-  createUser,
-  getUsers,
-  userLogin,
-  userLogout,
-} from "../repository/user";
-import { isAuthenticated } from "../middleware/auth";
-import { Role } from "../db/schema";
+import { Router } from 'express';
+import { createUser, getUsers, userLogin, userLogout } from '@/repository/user';
+import { isAuthenticated } from '@/middleware/auth';
+import { Role } from '@/db/schema';
 
 const userRouter = Router();
 
 enum UserRoutes {
-  LOGIN = "/login",
-  LOGOUT = "/logout",
-  ALL = "/all",
-  ROOT = "/",
+  LOGIN = '/login',
+  LOGOUT = '/logout',
+  ALL = '/all',
+  ROOT = '/',
 }
 
 userRouter.get(UserRoutes.ALL, isAuthenticated([Role.Admin]), getUsers);
@@ -23,10 +18,10 @@ userRouter.post(UserRoutes.LOGOUT, userLogout);
 userRouter.post(
   UserRoutes.ROOT,
   isAuthenticated([
-    // todo - uncomment after creating client
+    // TODO - uncomment after creating client
     // Role.Admin
   ]),
-  createUser
+  createUser,
 );
 
 export default userRouter;

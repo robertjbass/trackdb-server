@@ -1,9 +1,10 @@
 import 'dotenv/config';
+import 'module-alias/register';
 
 import express from 'express';
-import { initMigrations } from './db';
-import { expressSession } from './middleware/auth';
-import { initRoutes } from './router';
+import { initMigrations } from '@/db';
+import { expressSession } from '@/middleware/auth';
+import { initRoutes } from '@/router';
 
 const PORT = process.env.PORT || 3000;
 const app = express();
