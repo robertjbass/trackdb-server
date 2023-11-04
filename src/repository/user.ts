@@ -1,8 +1,9 @@
-import { eq } from "drizzle-orm";
-import { db } from "../";
-import { user } from "../schema";
-import bcrypt from "bcrypt";
 import { NextFunction, Request, Response } from "express";
+import { eq } from "drizzle-orm";
+import { db } from "../db";
+import { user } from "../db/schema";
+import { HttpStatus } from "../helpers/httpStatus.enum";
+import bcrypt from "bcrypt";
 
 const getUserByEmail = async (email: string) => {
   const result = await db
@@ -39,14 +40,14 @@ export const getUsers = async (
     .from(user);
 
   if (!users) {
-    res.status(404).send("Users not found");
+    res.status(HttpStatus.NOT_FOUND).send();
     return;
   }
 
-  res.status(200).json(users);
+  res.status(HttpStatus.OK).json(users);
 };
 
-export const logUserIn = async (
+export const userLogin = async (
   req: Request,
   res: Response,
   _next: NextFunction
@@ -58,6 +59,7 @@ export const logUserIn = async (
       id: user.id,
       email: user.email,
       password: user.password,
+      role: user.role,
     })
     .from(user)
     .where(eq(user.email, email));
@@ -66,27 +68,44 @@ export const logUserIn = async (
     throw new Error("User not found");
   }
 
-  const hashedPassword = result[0].password;
-
-  if (!hashedPassword) {
-    res.status(404).send("User password hash not found");
+  const dbUser = result[0];
+  if (!dbUser.password || !dbUser?.id) {
+    res.status(HttpStatus.NOT_FOUND).send();
     return;
   }
 
-  const isPasswordCorrect = await bcrypt.compare(password, hashedPassword);
+  const isPasswordCorrect = await bcrypt.compare(password, dbUser.password);
 
   if (!isPasswordCorrect) {
-    res.status(401).send("Unauthorized");
+    res.status(HttpStatus.UNAUTHORIZED).send();
     return;
   }
 
-  const fetchedUser = await getUserByEmail(email);
-  if (fetchedUser.length !== 1) {
-    res.status(404).send("User not found");
+  const { password: _password, ...userWithoutPassword } = dbUser;
+  req.session.user = userWithoutPassword;
+
+  const fetchedUsers = await getUserByEmail(email);
+  if (fetchedUsers.length !== 1) {
+    res.status(HttpStatus.NOT_FOUND).send();
     return;
   }
 
-  res.status(200).json({ message: "Success", user: fetchedUser[0] });
+  res.status(HttpStatus.OK).json({ message: "Success", user: fetchedUsers[0] });
+};
+
+export const userLogout = async (
+  req: Request,
+  res: Response,
+  _next: NextFunction
+) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error(err);
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).send();
+      return;
+    }
+    res.status(HttpStatus.OK).send("Logged out");
+  });
 };
 
 export const createUser = async (
@@ -105,9 +124,11 @@ export const createUser = async (
     await db.insert(user).values({ ...req.body, password: hashedPassword });
 
     const createdUser = await getUserByEmail(req.body.email);
-    res.status(201).json({ message: "Success", user: createdUser });
+    res
+      .status(HttpStatus.CREATED)
+      .json({ message: "Success", user: createdUser });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Something went wrong" });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send();
   }
 };
