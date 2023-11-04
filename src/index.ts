@@ -1,11 +1,11 @@
-import "dotenv/config";
+import 'dotenv/config';
 
-import express from "express";
-import { runMigrations } from "./db";
-import { expressSession } from "./middleware/auth";
-import userRouter from "./router/userRouter";
+import express from 'express';
+import { initMigrations } from './db';
+import { expressSession } from './middleware/auth';
+import { initRoutes } from './router';
 
-declare module "express-session" {
+declare module 'express-session' {
   export interface SessionData {
     user: { [key: string]: any };
   }
@@ -14,15 +14,12 @@ declare module "express-session" {
 const PORT = process.env.PORT || 3000;
 const app = express();
 
+initMigrations();
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
 app.use(expressSession);
 
-runMigrations();
-
-app.use("/user", userRouter);
-
-app.get("/", async (_req, res) => res.send("Root Handler"));
+initRoutes(app);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
