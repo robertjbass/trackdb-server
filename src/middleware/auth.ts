@@ -1,7 +1,7 @@
-import { Request, Response, NextFunction } from "express";
-import session from "express-session";
-import { Role } from "../db/schema";
-import { HttpStatus } from "../helpers/httpStatus.enum";
+import { Request, Response, NextFunction } from 'express';
+import session from 'express-session';
+import { Role } from '../db/schema';
+import { HttpStatus } from '../types/httpStatus.enum';
 
 export const expressSession = session({
   secret: process.env.SESSION_SECRET as string,

@@ -1,9 +1,9 @@
-import { NextFunction, Request, Response } from "express";
-import { eq } from "drizzle-orm";
-import { db } from "../db";
-import { user } from "../db/schema";
-import { HttpStatus } from "../helpers/httpStatus.enum";
-import bcrypt from "bcrypt";
+import { NextFunction, Request, Response } from 'express';
+import { eq } from 'drizzle-orm';
+import { db } from '../db';
+import { user } from '../db/schema';
+import { HttpStatus } from '../types/httpStatus.enum';
+import bcrypt from 'bcrypt';
 
 const getUserByEmail = async (email: string) => {
   const result = await db
@@ -25,7 +25,7 @@ const getUserByEmail = async (email: string) => {
 export const getUsers = async (
   _req: Request,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ) => {
   const users = await db
     .select({
@@ -50,7 +50,7 @@ export const getUsers = async (
 export const userLogin = async (
   req: Request,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ) => {
   const { email, password } = req.body;
 
@@ -65,7 +65,7 @@ export const userLogin = async (
     .where(eq(user.email, email));
 
   if (result.length !== 1) {
-    throw new Error("User not found");
+    throw new Error('User not found');
   }
 
   const dbUser = result[0];
@@ -90,13 +90,13 @@ export const userLogin = async (
     return;
   }
 
-  res.status(HttpStatus.OK).json({ message: "Success", user: fetchedUsers[0] });
+  res.status(HttpStatus.OK).json({ message: 'Success', user: fetchedUsers[0] });
 };
 
 export const userLogout = async (
   req: Request,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ) => {
   req.session.destroy((err) => {
     if (err) {
@@ -104,17 +104,17 @@ export const userLogout = async (
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).send();
       return;
     }
-    res.status(HttpStatus.OK).send("Logged out");
+    res.status(HttpStatus.OK).send('Logged out');
   });
 };
 
 export const createUser = async (
   req: Request,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ) => {
   if (!req.body.password) {
-    throw new Error("Password is required");
+    throw new Error('Password is required');
   }
 
   const SALT_ROUNDS = 10;
@@ -126,7 +126,7 @@ export const createUser = async (
     const createdUser = await getUserByEmail(req.body.email);
     res
       .status(HttpStatus.CREATED)
-      .json({ message: "Success", user: createdUser });
+      .json({ message: 'Success', user: createdUser });
   } catch (error) {
     console.error(error);
     res.status(HttpStatus.INTERNAL_SERVER_ERROR).send();
