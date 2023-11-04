@@ -9,5 +9,5 @@ enum Routes {
 
 export const initRoutes = (app: Express) => {
   app.use(Routes.USER, userRouter);
-  app.get(Routes.ROOT, rootRouter);
+  app.use(Routes.ROOT, rootRouter);
 };
