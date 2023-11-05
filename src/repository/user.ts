@@ -109,6 +109,11 @@ export const createUser = async (req: Request, res: Response) => {
   const hashedPassword = await bcrypt.hash(req.body.password, SALT_ROUNDS);
 
   try {
+    // todo
+    // await db.insert(users).values({ name: 'Dan' }).returning();
+    // partial return
+    // await db.insert(users).values({ name: 'Partial Dan' }).returning({ insertedId: users.id });
+
     await db.insert(user).values({ ...req.body, password: hashedPassword });
 
     const createdUsers = await getUserByEmail(req.body.email);
