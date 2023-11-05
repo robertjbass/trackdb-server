@@ -43,6 +43,13 @@
       "when": 1699200467866,
       "tag": "0005_swift_aqueduct",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1699224379693,
+      "tag": "0006_striped_sir_ram",
+      "breakpoints": true
     }
   ]
 }

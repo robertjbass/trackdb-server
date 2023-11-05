@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { item, user } from '@/db/schema';
+import { NewItem, item } from '@/db/schema';
 import { HttpStatus } from '@/types/httpStatus.enum';
 import { eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
@@ -18,8 +18,18 @@ export const createItem = async (req: Request, res: Response) => {
     return;
   }
 
+  const name = req.body.name.toLowerCase().trim();
+  const unit = req.body.unit.toLowerCase().trim();
+
+  if (!name || !unit) {
+    res.status(HttpStatus.BAD_REQUEST).send();
+    return;
+  }
+
   try {
-    await db.insert(item).values({ ...req.body, userId });
+    const newItem: NewItem = { name, unit, userId };
+    await db.insert(item).values(newItem);
+    res.status(HttpStatus.CREATED).send();
   } catch (error) {
     console.error(error);
     res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(error);
