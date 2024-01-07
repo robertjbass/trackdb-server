@@ -1,16 +1,15 @@
 import { db } from '@/db';
-import { NewItem, item } from '@/db/schema';
+import { NewCategory, category } from '@/db/schema';
 import { HttpStatus } from '@/types/httpStatus.enum';
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { Request, Response } from 'express';
 
-const itemSchema = {
-  id: item.id,
-  name: item.name,
-  unit: item.unit,
+const categorySchema = {
+  id: category.id,
+  name: category.name,
 };
 
-export const createItem = async (req: Request, res: Response) => {
+export const createCategory = async (req: Request, res: Response) => {
   const userId = req.session.user?.id;
 
   if (!userId) {
@@ -19,16 +18,15 @@ export const createItem = async (req: Request, res: Response) => {
   }
 
   const name = req.body.name.toLowerCase().trim();
-  const unit = req.body.unit.toLowerCase().trim();
 
-  if (!name || !unit) {
+  if (!name) {
     res.status(HttpStatus.BAD_REQUEST).send();
     return;
   }
 
   try {
-    const newItem: NewItem = { name, unit, userId };
-    await db.insert(item).values(newItem);
+    const newCagtegory: NewCategory = { name, userId };
+    await db.insert(category).values(newCagtegory);
     res.status(HttpStatus.CREATED).send();
   } catch (error) {
     console.error(error);
@@ -36,7 +34,7 @@ export const createItem = async (req: Request, res: Response) => {
   }
 };
 
-export const getItems = async (req: Request, res: Response) => {
+export const getCategories = async (req: Request, res: Response) => {
   const userId = req.session.user?.id;
 
   if (!userId) {
@@ -45,18 +43,19 @@ export const getItems = async (req: Request, res: Response) => {
   }
 
   try {
-    const items = await db
-      .select(itemSchema)
-      .from(item)
-      .where(eq(item.userId, userId))
+    const categories = await db
+      .select(categorySchema)
+      .from(category)
+      .where(eq(category.userId, userId))
+      .orderBy(asc(category.weight))
       .execute();
 
-    if (!items) {
+    if (!categories) {
       res.status(HttpStatus.NOT_FOUND).send();
       return;
     }
 
-    res.status(HttpStatus.OK).json(items);
+    res.status(HttpStatus.OK).json(categories);
   } catch (error) {
     console.error(error);
     res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(error);

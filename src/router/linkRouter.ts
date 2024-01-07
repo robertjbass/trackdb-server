@@ -1,25 +1,25 @@
 import { Router } from 'express';
-import { createItem, getItems } from '@/repository/item';
+import { createLink, getLinks } from '@/repository/link';
 import { isAuthenticated } from '@/middleware/auth';
 import { Role } from '@/db/schema';
 
-const itemRouter = Router();
+const linkRouter = Router();
 
-enum ItemRoutes {
+enum LinkRoutes {
   ALL = '/all',
   ROOT = '/',
 }
 
-itemRouter.get(
-  ItemRoutes.ALL,
+linkRouter.get(
+  LinkRoutes.ALL,
   isAuthenticated([Role.Admin, Role.User]),
-  getItems,
+  getLinks,
 );
 
-itemRouter.post(
-  ItemRoutes.ROOT,
+linkRouter.post(
+  LinkRoutes.ROOT,
   isAuthenticated([Role.Admin, Role.User]),
-  createItem,
+  createLink,
 );
 
-export default itemRouter;
+export default linkRouter;

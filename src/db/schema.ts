@@ -17,60 +17,64 @@ export const user = pgTable('user', {
     .$type<Role.Admin | Role.User>()
     .notNull()
     .default(Role.User),
-  createdAt: timestamp('created_at').$default(() => new Date()),
-  updatedAt: timestamp('updated_at').$default(() => new Date()),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 export const usersRelations = relations(user, ({ many }) => ({
-  items: many(item),
+  categories: many(category),
 }));
 
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
 
-//* ITEM
-export const item = pgTable('item', {
+//* CATEGORY
+export const category = pgTable('category', {
   id: serial('id').primaryKey(),
   name: text('name'),
-  unit: text('unit'),
   userId: integer('user_id')
     .references(() => user.id)
     .notNull(),
+  weight: integer('weight').default(1),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const itemsRelations = relations(item, ({ one }) => ({
+export const categoryRelations = relations(category, ({ one }) => ({
   user: one(user, {
-    fields: [item.userId],
+    fields: [category.userId],
     references: [user.id],
   }),
 }));
 
-export type Item = typeof item.$inferSelect;
-export type NewItem = typeof item.$inferInsert;
+export type Category = typeof category.$inferSelect;
+export type NewCategory = typeof category.$inferInsert;
 
-//* LOG
-export const log = pgTable('log', {
+//* LINK
+export const link = pgTable('link', {
   id: serial('id').primaryKey(),
-  quantity: integer('quantity'),
+  url: text('url').notNull(),
   userId: integer('user_id')
     .references(() => user.id)
     .notNull(),
-  itemId: integer('item_id')
-    .references(() => item.id)
+  categoryId: integer('category_id')
+    .references(() => category.id)
     .notNull(),
-  logTime: timestamp('log_time').defaultNow(),
+  weight: integer('weight').default(1),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const logRelations = relations(log, ({ one }) => ({
+export const linkRelations = relations(link, ({ one }) => ({
   user: one(user, {
-    fields: [log.userId],
+    fields: [link.userId],
     references: [user.id],
   }),
-  item: one(item, {
-    fields: [log.itemId],
-    references: [item.id],
+  category: one(category, {
+    fields: [link.categoryId],
+    references: [category.id],
   }),
 }));
 
-export type Log = typeof log.$inferSelect;
-export type NewLog = typeof log.$inferInsert;
+export type Link = typeof link.$inferSelect;
+export type NewLink = typeof link.$inferInsert;
